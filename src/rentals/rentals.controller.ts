@@ -1,33 +1,34 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { CreateRentalDto, ListRentalsQueryDto } from './rental.dto.js';
+import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
 import { RentalsService } from './rentals.service.js';
+import { CreateRentalDto } from './dto/create-rental.dto.js';
+import { UpdateRentalDto } from './dto/update-rental.dto.js';
 
 @Controller('rentals')
 export class RentalsController {
   constructor(private readonly rentalsService: RentalsService) {}
 
   @Post()
-  create(@Body() dto: CreateRentalDto) {
-    return this.rentalsService.create(dto);
+  create(@Body() createRentalDto: CreateRentalDto) {
+    return this.rentalsService.create(createRentalDto);
   }
 
   @Get()
-  findAll(@Query() query: ListRentalsQueryDto) {
-    return this.rentalsService.findAll(query);
+  findAll() {
+    return this.rentalsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.rentalsService.findOne(id);
+  findOne(@Param('id') id: string) {
+    return this.rentalsService.findOne(+id);
   }
 
-  @Patch(':id/return')
-  returnRental(@Param('id', ParseIntPipe) id: number) {
-    return this.rentalsService.returnRental(id);
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateRentalDto: UpdateRentalDto) {
+    return this.rentalsService.update(+id, updateRentalDto);
   }
 
-  @Patch(':id/cancel')
-  cancel(@Param('id', ParseIntPipe) id: number) {
-    return this.rentalsService.cancel(id);
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.rentalsService.delete(+id);
   }
 }

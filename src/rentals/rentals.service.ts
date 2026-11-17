@@ -1,121 +1,76 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateRentalDto, ListRentalsQueryDto } from './rental.dto.js';
-import { Rental, RentalStatus } from './rental.model.js';
-
-const MS_PER_DAY = 86_400_000;
-
-// Datos TEMPORALES mientras los módulos de cars y customers no estén listos.
-const CARS = [
-  { id: 1, pricePerDay: 120000, inMaintenance: false },
-  { id: 2, pricePerDay: 95000, inMaintenance: false },
-  { id: 3, pricePerDay: 150000, inMaintenance: true },
-];
-
-const CUSTOMERS = [
-  { id: 1, licenseExpiration: '2029-12-31' },
-  { id: 2, licenseExpiration: '2024-01-01' }, // licencia vencida
-];
+import { CreateRentalDto } from './dto/create-rental.dto.js';
+import { UpdateRentalDto } from './dto/update-rental.dto.js';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Rental } from './entities/rental.entity.js';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RentalsService {
-  private rentals: Rental[] = [];
-  private nextId = 1;
+  constructor(
+    @InjectRepository(Rental) private rentalRepository: Repository<Rental>,
+  ) {}
 
-  create(dto: CreateRentalDto): Rental {
-    if (dto.endDate <= dto.startDate) {
-      throw new BadRequestException('La fecha de fin debe ser posterior a la fecha de inicio');
-    }
+  async create(body: CreateRentalDto) {
+    try {
+      const newRental = await this.rentalRepository.save({
+        ...body,
+      });
 
-    const customer = CUSTOMERS.find((c) => c.id === dto.customerId);
-    if (!customer) {
-      throw new NotFoundException(`El cliente con id ${dto.customerId} no existe`);
+      return {
+        message: 'Alquiler creado exitosamente',
+        data: newRental,
+      };
+    } catch {
+      throw new BadRequestException('Error al crear el alquiler');
     }
-    if (customer.licenseExpiration < dto.endDate) {
-      throw new BadRequestException('La licencia del cliente vence antes de terminar la renta');
-    }
+  }
 
-    const car = CARS.find((c) => c.id === dto.carId);
-    if (!car) {
-      throw new NotFoundException(`El carro con id ${dto.carId} no existe`);
-    }
-    if (car.inMaintenance) {
-      throw new ConflictException('El carro está en mantenimiento');
-    }
-
-    if (this.hasOverlap(dto.carId, dto.startDate, dto.endDate)) {
-      throw new ConflictException('El carro ya tiene una renta activa en esas fechas');
-    }
-
-    const days =
-      (new Date(dto.endDate).getTime() - new Date(dto.startDate).getTime()) / MS_PER_DAY;
-
-    const rental: Rental = {
-      id: this.nextId++,
-      carId: dto.carId,
-      customerId: dto.customerId,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
-      totalCost: days * car.pricePerDay, // lo calcula el backend, nunca el cliente
-      status: RentalStatus.ACTIVE,
-      returnedAt: null,
-      createdAt: new Date(),
+  async findAll() {
+    const rentals = await this.rentalRepository.find();
+    return {
+      data: rentals,
+      count: rentals.length,
     };
-
-    this.rentals.push(rental);
-    return rental;
   }
 
-  findAll(query: ListRentalsQueryDto): Rental[] {
-    return this.rentals.filter(
-      (r) =>
-        (query.carId === undefined || r.carId === query.carId) &&
-        (query.customerId === undefined || r.customerId === query.customerId) &&
-        (query.status === undefined || r.status === query.status),
-    );
-  }
-
-  findOne(id: number): Rental {
-    const rental = this.rentals.find((r) => r.id === id);
+  async findOne(id: number) {
+    const rental = await this.rentalRepository.findOne({
+      where: { id },
+    });
     if (!rental) {
-      throw new NotFoundException(`La renta con id ${id} no existe`);
+      throw new NotFoundException(`Alquiler con ID ${id} no encontrado`);
     }
     return rental;
   }
 
-  returnRental(id: number): Rental {
-    const rental = this.findOne(id);
-    this.ensureActive(rental, 'devolver');
-    rental.status = RentalStatus.RETURNED;
-    rental.returnedAt = new Date();
-    return rental;
+  async update(id: number, change: UpdateRentalDto) {
+    const rental = await this.findOne(id);
+    try {
+      const updatedRental = this.rentalRepository.merge(rental, change);
+      const savedRental = await this.rentalRepository.save(updatedRental);
+      return {
+        data: savedRental,
+        message: 'Alquiler actualizado exitosamente',
+      };
+    } catch {
+      throw new BadRequestException('Error al actualizar el alquiler');
+    }
   }
 
-  cancel(id: number): Rental {
-    const rental = this.findOne(id);
-    this.ensureActive(rental, 'cancelar');
-    rental.status = RentalStatus.CANCELLED;
-    return rental;
-  }
-
-  /** Hay cruce si: inicio existente < fin nuevo  Y  fin existente > inicio nuevo */
-  private hasOverlap(carId: number, startDate: string, endDate: string): boolean {
-    return this.rentals.some(
-      (r) =>
-        r.carId === carId &&
-        r.status === RentalStatus.ACTIVE &&
-        r.startDate < endDate &&
-        r.endDate > startDate,
-    );
-  }
-
-  private ensureActive(rental: Rental, action: string): void {
-    if (rental.status !== RentalStatus.ACTIVE) {
-      throw new ConflictException(`No se puede ${action} una renta en estado ${rental.status}`);
+  async delete(id: number) {
+    await this.findOne(id);
+    try {
+      await this.rentalRepository.delete(id);
+      return {
+        message: 'Alquiler eliminado exitosamente',
+      };
+    } catch {
+      throw new BadRequestException('Error al eliminar el alquiler');
     }
   }
 }
