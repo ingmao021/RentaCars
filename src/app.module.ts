@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Env } from './env.model.js';
 import { CarsModule } from './cars/cars.module.js';
+import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CarsModule } from './cars/cars.module.js';
       inject: [ConfigService],
     }),
     CarsModule,
+    UsersModule,
 
   ],
 })
