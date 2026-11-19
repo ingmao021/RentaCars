@@ -21,6 +21,7 @@ API desarrollada con **NestJS**, **TypeORM** y **PostgreSQL** para administrar u
 
 - 🚙 **Cars** – catálogo de vehículos (marca, modelo, placa, año, precio por día y disponibilidad).
 - 👤 **Users** – usuarios con su perfil (nombre, teléfono y licencia de conducción).
+- 📅 **Rentals** – alquileres que relacionan un usuario con un carro (fecha de inicio y fin, notas y estado activo). Valida que el usuario y el carro existan, que el carro esté disponible y que la fecha de fin sea posterior a la de inicio.
 
 Incluye operaciones **CRUD** por recurso y validación de datos con DTOs.
 
@@ -100,7 +101,7 @@ La API queda disponible en **http://localhost:3000** 🎉
     <td align="center" width="50%">
       <h3>🎥</h3>
       <b>Anderson Mauricio<br>Ordoñez Zuñiga</b><br><br>
-      <a href="PEGAR_LINK_DRIVE_AQUI"><img src="https://img.shields.io/badge/Google%20Drive-Ver%20video-4285F4?style=for-the-badge&logo=googledrive&logoColor=white" alt="Ver video en Google Drive" /></a>
+      <a href="https://drive.google.com/file/d/1oGchn2VRZGlv2wJcJu3mIGLTTqgQNbi4/view?usp=sharing"><img src="https://img.shields.io/badge/Google%20Drive-Ver%20video-4285F4?style=for-the-badge&logo=googledrive&logoColor=white" alt="Ver video en Google Drive" /></a>
     </td>
     <td align="center" width="50%">
       <h3>🎥</h3>
