@@ -33,7 +33,7 @@ export class UsersService {
 
   async findAll() {
     const users = await this.userRepository.find({
-      relations: { profile: true },
+      relations: { profile: true, rentals: true },
     });
     return {
       data: users,
@@ -44,7 +44,7 @@ export class UsersService {
   async findOne(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: { profile: true },
+      relations: { profile: true, rentals: { car: true } },
     });
     if (!user) {
       throw new NotFoundException(`Usuario con ID ${id} no existe`);

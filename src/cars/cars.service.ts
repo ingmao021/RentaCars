@@ -29,7 +29,9 @@ export class CarsService {
   }
 
   async findAll() {
-    const cars = await this.carRepository.find();
+    const cars = await this.carRepository.find({
+      relations: { rentals: true },
+    });
     return {
       data: cars,
       count: cars.length,
@@ -37,7 +39,10 @@ export class CarsService {
   }
 
   async findOne(id: number) {
-    const car = await this.carRepository.findOne({ where: { id } });
+    const car = await this.carRepository.findOne({
+      where: { id },
+      relations: { rentals: { user: { profile: true } } },
+    });
     if (!car) {
       throw new NotFoundException(`Carro con ID ${id} no existe`);
     }

@@ -59,6 +59,9 @@ export class RentalsService {
       user: { id: userId },
       car: { id: carId },
     });
+
+    await this.carRepository.update(car.id, { isAvailable: false });
+
     return this.findOne(rental.id);
   }
 
@@ -85,13 +88,34 @@ export class RentalsService {
       body.startDate ?? rental.startDate.toISOString(),
       body.endDate ?? rental.endDate.toISOString(),
     );
-    await this.rentalRepository.save({ ...body, id });
+
+    if (body.isActive !== undefined && body.isActive !== rental.isActive) {
+      if (body.isActive === true) {
+        const currentCar = await this.carRepository.findOneBy({
+          id: rental.car.id,
+        });
+        if (currentCar && !currentCar.isAvailable) {
+          throw new BadRequestException(
+            `El carro con id ${rental.car.id} no está disponible`,
+          );
+        }
+        await this.carRepository.update(rental.car.id, { isAvailable: false });
+      } else {
+        await this.carRepository.update(rental.car.id, { isAvailable: true });
+      }
+    }
+
+    const updatedRental = this.rentalRepository.merge(rental, body);
+    await this.rentalRepository.save(updatedRental);
     return this.findOne(id);
   }
 
   async remove(id: number) {
     const rental = await this.findOne(id);
     await this.rentalRepository.remove(rental);
+    if (rental.isActive) {
+      await this.carRepository.update(rental.car.id, { isAvailable: true });
+    }
     return { message: `Alquiler con id ${id} eliminado` };
   }
 }
