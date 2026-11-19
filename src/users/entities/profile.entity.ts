@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from './user.entity.js';
 
 @Entity({
   name: 'profiles',
@@ -29,6 +31,9 @@ export class Profile {
     name: 'driver_license',
   })
   driverLicense: string;
+
+  @OneToOne(() => User, (user) => user.profile)
+  user: User;
 
   @CreateDateColumn({
     type: 'timestamptz',

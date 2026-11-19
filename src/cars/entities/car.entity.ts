@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Rental } from '../../rentals/entities/rental.entity.js';
 
 @Entity({
   name: 'cars',
@@ -33,6 +35,9 @@ export class Car {
 
   @Column({ type: 'boolean', default: true, name: 'is_available' })
   isAvailable: boolean;
+
+  @OneToMany(() => Rental, (rental) => rental.car)
+  rentals: Rental[];
 
   @CreateDateColumn({
     type: 'timestamptz',
