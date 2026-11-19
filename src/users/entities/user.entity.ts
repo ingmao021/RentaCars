@@ -3,11 +3,13 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Profile } from './profile.entity.js';
+import { Rental } from '../../rentals/entities/rental.entity.js';
 
 @Entity({
   name: 'users',
@@ -19,9 +21,15 @@ export class User {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @OneToOne(() => Profile, { nullable: false, cascade: true })
+  @OneToOne(() => Profile, (profile) => profile.user, {
+    nullable: false,
+    cascade: true,
+  })
   @JoinColumn({ name: 'profile_id' })
   profile: Profile;
+
+  @OneToMany(() => Rental, (rental) => rental.user)
+  rentals: Rental[];
 
   @CreateDateColumn({
     type: 'timestamptz',

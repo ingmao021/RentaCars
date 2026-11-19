@@ -29,11 +29,17 @@ export class Rental {
   @Column({ type: 'boolean', default: true, name: 'is_active' })
   isActive: boolean;
 
-  @ManyToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, (user) => user.rentals, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Car, { nullable: false })
+  @ManyToOne(() => Car, (car) => car.rentals, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'car_id' })
   car: Car;
 
