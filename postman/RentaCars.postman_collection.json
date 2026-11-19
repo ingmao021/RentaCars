@@ -1,0 +1,965 @@
+{
+  "info": {
+    "_postman_id": "c8e10260-23b5-4a64-9be1-0d3f82b7ca5e",
+    "name": "RentaCars API - Flujo Completo y Relaciones",
+    "description": "Colección completa para probar las relaciones (Users 1:1 Profile, Users 1:N Rentals, Cars 1:N Rentals) y el ciclo de vida del alquiler con disponibilidad de vehículos en NestJS + TypeORM.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "carId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "carId2",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "rentalId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Usuarios y Perfiles (Relación 1:1)",
+      "description": "Operaciones CRUD para usuarios con perfil anidado (One-to-One).",
+      "item": [
+        {
+          "name": "1. Crear Usuario con Perfil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Usuario creado con perfil anidado (1:1)\", function () {",
+                  "    pm.expect(res).to.have.property(\"data\");",
+                  "    pm.expect(res.data).to.have.property(\"id\");",
+                  "    pm.expect(res.data).to.have.property(\"email\");",
+                  "    pm.expect(res.data).to.have.property(\"profile\");",
+                  "    pm.expect(res.data.profile).to.have.property(\"driverLicense\");",
+                  "});",
+                  "",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set(\"userId\", res.data.id);",
+                  "    console.log(\"userId guardado:\", res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario_{{$randomInt}}@rentacars.com\",\n  \"profile\": {\n    \"firstName\": \"Sebastian\",\n    \"lastName\": \"Ibarra\",\n    \"phone\": \"+573123456789\",\n    \"driverLicense\": \"DL-COL-{{$randomInt}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Listar Todos los Usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Retorna lista con conteo y perfiles poblados\", function () {",
+                  "    pm.expect(res).to.have.property(\"data\");",
+                  "    pm.expect(Array.isArray(res.data)).to.be.true;",
+                  "    if (res.data.length > 0) {",
+                  "        pm.expect(res.data[0]).to.have.property(\"profile\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Obtener Usuario por ID (Verifica Perfil y Alquileres)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Retorna relaciones de perfil y alquileres\", function () {",
+                  "    pm.expect(res.id).to.eql(parseInt(pm.collectionVariables.get(\"userId\")));",
+                  "    pm.expect(res).to.have.property(\"profile\");",
+                  "    pm.expect(res).to.have.property(\"rentals\");",
+                  "    pm.expect(Array.isArray(res.rentals)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Actualizar Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Usuario y perfil actualizados\", function () {",
+                  "    pm.expect(res).to.have.property(\"data\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sebastian.updated_{{$randomInt}}@rentacars.com\",\n  \"profile\": {\n    \"phone\": \"+573199998888\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Vehículos (Cars)",
+      "description": "Operaciones CRUD para vehículos.",
+      "item": [
+        {
+          "name": "1. Crear Carro 1 (Disponible)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Carro creado y disponible\", function () {",
+                  "    pm.expect(res.data).to.have.property(\"id\");",
+                  "    pm.expect(res.data.isAvailable).to.be.true;",
+                  "});",
+                  "",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set(\"carId\", res.data.id);",
+                  "    console.log(\"carId guardado:\", res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla Cross\",\n  \"plate\": \"TYT{{$randomInt}}\",\n  \"color\": \"Gris Plata\",\n  \"year\": 2024,\n  \"pricePerDay\": 180000,\n  \"isAvailable\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Crear Carro 2 (Secundario)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set(\"carId2\", res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Mazda\",\n  \"model\": \"CX-30\",\n  \"plate\": \"MZD{{$randomInt}}\",\n  \"color\": \"Rojo Diamante\",\n  \"year\": 2023,\n  \"pricePerDay\": 210000,\n  \"isAvailable\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Listar Todos los Carros",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Lista contiene los carros con su relacion de rentals\", function () {",
+                  "    pm.expect(res).to.have.property(\"data\");",
+                  "    pm.expect(Array.isArray(res.data)).to.be.true;",
+                  "    if (res.data.length > 0) {",
+                  "        pm.expect(res.data[0]).to.have.property(\"rentals\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Obtener Carro por ID (Con Historial de Alquileres)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Retorna carro con relacion de alquileres\", function () {",
+                  "    pm.expect(res.id).to.eql(parseInt(pm.collectionVariables.get(\"carId\")));",
+                  "    pm.expect(res).to.have.property(\"rentals\");",
+                  "    pm.expect(Array.isArray(res.rentals)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars/{{carId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars",
+                "{{carId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Actualizar Carro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricePerDay\": 190000,\n  \"color\": \"Gris Metálico\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars/{{carId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars",
+                "{{carId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Flujo de Alquileres y Relaciones (Rentals)",
+      "description": "Pruebas integrales de relaciones: vinculación de User y Car en Rental, actualización reactiva de disponibilidad del carro y control de estados.",
+      "item": [
+        {
+          "name": "1. Crear Alquiler (Relaciona User y Car)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const now = new Date();",
+                  "const end = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);",
+                  "pm.variables.set(\"rentalStartDate\", now.toISOString());",
+                  "pm.variables.set(\"rentalEndDate\", end.toISOString());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Alquiler creado con relaciones pobladas (user, profile, car)\", function () {",
+                  "    pm.expect(res).to.have.property(\"id\");",
+                  "    pm.expect(res).to.have.property(\"user\");",
+                  "    pm.expect(res.user).to.have.property(\"profile\");",
+                  "    pm.expect(res).to.have.property(\"car\");",
+                  "    pm.expect(res.car.id).to.eql(parseInt(pm.collectionVariables.get(\"carId\")));",
+                  "    pm.expect(res.user.id).to.eql(parseInt(pm.collectionVariables.get(\"userId\")));",
+                  "    pm.expect(res.isActive).to.be.true;",
+                  "});",
+                  "",
+                  "if (res.id) {",
+                  "    pm.collectionVariables.set(\"rentalId\", res.id);",
+                  "    console.log(\"rentalId guardado:\", res.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"carId\": {{carId}},\n  \"startDate\": \"{{rentalStartDate}}\",\n  \"endDate\": \"{{rentalEndDate}}\",\n  \"notes\": \"Alquiler de prueba para verificar relaciones completas\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rentals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Verificar Carro Ocupado (isAvailable cambia a false)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"El carro ahora está no disponible (isAvailable: false)\", function () {",
+                  "    pm.expect(res.isAvailable).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test(\"El carro incluye en sus relaciones el alquiler activo\", function () {",
+                  "    pm.expect(res.rentals).to.be.an(\"array\");",
+                  "    const rental = res.rentals.find(r => r.id === parseInt(pm.collectionVariables.get(\"rentalId\")));",
+                  "    pm.expect(rental).to.not.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars/{{carId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars",
+                "{{carId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Verificar Usuario con Relación a Rental y Car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"El usuario lista su alquiler y los datos del carro relacionado\", function () {",
+                  "    pm.expect(res.rentals).to.be.an(\"array\");",
+                  "    pm.expect(res.rentals.length).to.be.greaterThan(0);",
+                  "    const rental = res.rentals.find(r => r.id === parseInt(pm.collectionVariables.get(\"rentalId\")));",
+                  "    pm.expect(rental).to.not.be.undefined;",
+                  "    pm.expect(rental).to.have.property(\"car\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Intentar Alquilar Carro Ocupado (Validación 400 Bad Request)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const now = new Date();",
+                  "const end = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);",
+                  "pm.variables.set(\"overlapStartDate\", now.toISOString());",
+                  "pm.variables.set(\"overlapEndDate\", end.toISOString());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Error confirma que el carro no está disponible\", function () {",
+                  "    pm.expect(res.message).to.include(\"no está disponible\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"carId\": {{carId}},\n  \"startDate\": \"{{overlapStartDate}}\",\n  \"endDate\": \"{{overlapEndDate}}\",\n  \"notes\": \"Intento no permitido\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rentals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Listar Todos los Alquileres",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Retorna lista con relaciones de user, profile y car\", function () {",
+                  "    pm.expect(Array.isArray(res)).to.be.true;",
+                  "    if (res.length > 0) {",
+                  "        pm.expect(res[0]).to.have.property(\"user\");",
+                  "        pm.expect(res[0].user).to.have.property(\"profile\");",
+                  "        pm.expect(res[0]).to.have.property(\"car\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rentals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. Obtener Alquiler por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Alquiler contiene todas las entidades relacionadas\", function () {",
+                  "    pm.expect(res.id).to.eql(parseInt(pm.collectionVariables.get(\"rentalId\")));",
+                  "    pm.expect(res).to.have.property(\"user\");",
+                  "    pm.expect(res.user).to.have.property(\"profile\");",
+                  "    pm.expect(res).to.have.property(\"car\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rentals/{{rentalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals",
+                "{{rentalId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. Actualizar Alquiler (Modificar Notas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Notas actualizadas correctamente\", function () {",
+                  "    pm.expect(res.notes).to.include(\"actualizada\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Nota actualizada durante el viaje\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rentals/{{rentalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals",
+                "{{rentalId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "8. Finalizar Alquiler (isActive: false - Libera el Carro)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Alquiler finalizado (isActive: false)\", function () {",
+                  "    pm.expect(res.isActive).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"notes\": \"Vehículo entregado en perfecto estado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rentals/{{rentalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals",
+                "{{rentalId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9. Verificar Carro Liberado (isAvailable vuelve a true)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"El carro vuelve a estar disponible (isAvailable: true)\", function () {",
+                  "    pm.expect(res.isAvailable).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars/{{carId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars",
+                "{{carId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "10. Eliminar Alquiler",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Mensaje de confirmación\", function () {",
+                  "    pm.expect(res.message).to.include(\"eliminado\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rentals/{{rentalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rentals",
+                "{{rentalId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Limpieza Final (Cleanup)",
+      "description": "Elimina los registros creados durante las pruebas para mantener la base de datos limpia.",
+      "item": [
+        {
+          "name": "1. Eliminar Carro 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars/{{carId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars",
+                "{{carId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Eliminar Carro 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars/{{carId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars",
+                "{{carId2}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Eliminar Usuario (Elimina Perfil y Relaciones en Cascada)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -90,6 +90,29 @@ La API queda disponible en **http://localhost:3000** 🎉
 
 ---
 
+## 📮 Colección de Postman (Pruebas del Flujo Completo)
+
+Se incluye la colección de Postman en formato JSON v2.1 con todas las peticiones, scripts de prueba automatizados y validaciones de relaciones:
+
+- **Ruta de la colección**: `postman/RentaCars.postman_collection.json` (también disponible en la raíz como `RentaCars.postman_collection.json`).
+
+### Pasos para importar y ejecutar en Postman:
+1. Abre **Postman**.
+2. Haz clic en **Import** y selecciona el archivo `postman/RentaCars.postman_collection.json`.
+3. La variable de colección `baseUrl` viene preconfigurada en `http://localhost:3000`.
+4. Puedes probar peticiones individuales o usar el **Collection Runner** para ejecutar todo el flujo continuo:
+   - **01 - Usuarios y Perfiles (1:1)**: Creación, listado y consulta con perfil anidado.
+   - **02 - Vehículos (Cars)**: Creación de catálogo con disponibilidad inicial.
+   - **03 - Flujo de Alquileres y Relaciones (Rentals)**:
+     - Vinculación de User y Car en Rental.
+     - Actualización automática de la disponibilidad del carro a `false`.
+     - Consulta de alquileres embebidos en el usuario y en el carro.
+     - Validación contra sobre-alquiler (400 si el carro está ocupado).
+     - Finalización del alquiler (`isActive: false`) y liberación del vehículo (`isAvailable: true`).
+   - **04 - Limpieza Final (Cleanup)**: Eliminación de recursos de prueba manteniendo la integridad referencial.
+
+---
+
 ## 🎬 Video presentaciones de cada integrante
 
 <!-- Reemplaza cada PEGAR_LINK_DRIVE_AQUI por el enlace del video en Google Drive -->
