@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity.js';
@@ -34,14 +35,14 @@ export class Rental {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user: Relation<User>;
 
   @ManyToOne(() => Car, (car) => car.rentals, {
     nullable: false,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'car_id' })
-  car: Car;
+  car: Relation<Car>;
 
   @CreateDateColumn({
     type: 'timestamptz',

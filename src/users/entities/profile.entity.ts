@@ -4,6 +4,7 @@ import {
   Entity,
   OneToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity.js';
@@ -33,7 +34,7 @@ export class Profile {
   driverLicense: string;
 
   @OneToOne(() => User, (user) => user.profile)
-  user: User;
+  user: Relation<User>;
 
   @CreateDateColumn({
     type: 'timestamptz',

@@ -6,6 +6,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from 'typeorm';
 import { Profile } from './profile.entity.js';
@@ -26,10 +27,10 @@ export class User {
     cascade: true,
   })
   @JoinColumn({ name: 'profile_id' })
-  profile: Profile;
+  profile: Relation<Profile>;
 
   @OneToMany(() => Rental, (rental) => rental.user)
-  rentals: Rental[];
+  rentals: Relation<Rental[]>;
 
   @CreateDateColumn({
     type: 'timestamptz',
